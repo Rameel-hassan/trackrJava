@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/task_detail_graph"
+    app:startDestination="@id/nav_task_detail_placeholder">
+
+    <!-- Any destination can open a new Task Detail that replaces the current one. -->
+    <action
+        android:id="@+id/to_task_detail"
+        app:destination="@id/nav_task_detail"
+        app:popUpTo="@id/nav_task_detail"
+        app:popUpToInclusive="true" />
+
+    <fragment
+        android:id="@+id/nav_task_detail"
+        android:name="com.example.trackr.ui.detail.TaskDetailFragment"
+        android:label="Task Detail"
+        android:layout="@layout/task_detail_fragment">
+        <argument
+            android:name="taskId"
+            app:argType="long" />
+    </fragment>
+
+    <!-- The graph needs a start destination, so use a placeholder. -->
+    <fragment
+        android:id="@+id/nav_task_detail_placeholder"
+        android:name="com.example.trackr.ui.PlaceholderFragment"
+        tools:layout="@layout/placeholder_fragment"/>
+
+</navigation>
