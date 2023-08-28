@@ -110,7 +110,7 @@ public class TaskEditViewModel extends ViewModel {
     }
 
     private BehaviorSubject<User> _owner = BehaviorSubject.createDefault(currentUser);
-    public User owner = _owner.getValue();
+    public BehaviorSubject<User> owner = _owner;
 
     private BehaviorSubject<User> _creator = BehaviorSubject.createDefault(currentUser);
 

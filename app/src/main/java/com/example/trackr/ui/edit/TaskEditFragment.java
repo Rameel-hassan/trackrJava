@@ -1,15 +1,17 @@
 package com.example.trackr.ui.edit;
 
-import androidx.fragment.app.Fragment;
 
 /**
  * @author Rameel Hassan
  * Created 17/08/2023 at 12:53 pm
  */
-import android.annotation.SuppressLint;
+
+
 import android.app.Dialog;
 import android.os.Bundle;
 import android.view.ContextThemeWrapper;
+
+
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
@@ -18,22 +20,30 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
-import androidx.annotation.LayoutRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.WindowCompat;
 import androidx.fragment.app.DialogFragment;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleEventObserver;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ViewModelProvider;
 
+import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
+import com.example.trackr.NavTaskEditGraphArgs;
 import com.example.trackr.R;
 import com.example.trackr.databinding.TaskEditFragmentBinding;
 import com.example.trackr.shared.db.tables.TaskStatus;
+import com.example.trackr.shared.utils.DateTimeUtils;
+import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.time.Clock;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
@@ -41,7 +51,6 @@ import dagger.hilt.android.AndroidEntryPoint;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
 @AndroidEntryPoint
@@ -51,13 +60,14 @@ public class TaskEditFragment extends DialogFragment {
     @Inject
     private Clock clock;
     private NavTaskEditGraphArgs args;
-    private Spinner statusSpinner;
-    private MenuItem menuItemSave;
+//    private Spinner statusSpinner;
     private CompositeDisposable disposables = new CompositeDisposable();
     TaskEditFragmentBinding binding;
 
     private static final String FRAGMENT_DATE_PICKER = "date_picker";
-
+    public TaskEditFragment() {
+        super(R.layout.task_edit_fragment);
+    }
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,55 +79,89 @@ public class TaskEditFragment extends DialogFragment {
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+
+        Long taskId = args.getTaskId();
+        viewModel.taskId = taskId;
+
+
         ContextThemeWrapper themedContext = new ContextThemeWrapper(requireContext(), R.style.ThemeOverlay_Trackr_TaskEdit);
         MaterialAlertDialogBuilder dialogBuilder = new MaterialAlertDialogBuilder(themedContext);
+        Dialog dialog = dialogBuilder
+                .setCancelable(false)
+                .setOnKeyListener((dialogInterface, i, keyEvent) -> {
+                    if (i == KeyEvent.KEYCODE_BACK && keyEvent.getAction() == KeyEvent.ACTION_UP) {
+                        close();
+                        return true;
+                    }
+                    return false;
+                }).create();
 
-        Dialog dialog = dialogBuilder.setCancelable(false).create();
-        dialog.setContentView(R.layout.task_edit_fragment);
+
+//        dialog.setContentView(R.layout.task_edit_fragment);
 
         Window window = dialog.getWindow();
         if (window != null) {
             WindowCompat.setDecorFitsSystemWindows(window, false);
         }
 
-        initViews(dialog);
-        setupObservers();
-
-        return dialog;
-    }
-
-    private void initViews(Dialog dialog) {
-        View view = dialog.findViewById(android.R.id.content);
-        if (view == null) return;
         binding = TaskEditFragmentBinding.inflate(dialog.getLayoutInflater());
+
         binding.setViewModel(viewModel);
         binding.setClock(clock);
         binding.setLifecycleOwner(this);
 
 
 
-//        Toolbar toolbar = view.findViewById(R.id.toolbar);
-//        toolbar.setTitle(args.getTaskId() == 0L ? R.string.new_task : R.string.edit_task);
-//        toolbar.setNavigationOnClickListener(v -> close());
+        binding.toolbar.setTitle(taskId == 0L ? R.string.new_task : R.string.edit_task);
+        binding.toolbar.setNavigationOnClickListener(view1 -> close());
+        binding.toolbar.setOnMenuItemClickListener(item -> {
+            switch (item.getItemId())
+            {
+                case R.id.action_save:
+                    if (binding.content.title.getText().toString().isEmpty()) {
+                        binding.content.title.setError(getResources().getString(R.string.missing_title_error));
+                    } else {
+                        viewModel.save(success -> {
+                            if (success) {
+                                findNavController().popBackStack();
+                            }
+                        });
+                    }
+                    return true;
+                default:
+                    return false;
+            }
+        });
 //
-        binding.
+        MenuItem menuItemSave = binding.toolbar.getMenu().findItem(R.id.action_save);
+        binding.content.status.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                viewModel.updateState(TaskStatus.values()[i]);
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
 
+            }
+        });
+        binding.content.tagContainer.setOnClickListener(view12 -> findNavController().navigate(R.id.nav_tag_selection));
+        binding.content.owner.setOnClickListener ( view13 -> findNavController().navigate(R.id.nav_user_selection));
 
-        menuItemSave = toolbar.getMenu().findItem(R.id.action_save);
-        statusSpinner = view.findViewById(R.id.status_spinner);
+        ArrayAdapter adapter= new ArrayAdapter(
+                requireContext(),
+                R.layout.status_spinner_item,
+                R.id.status_text,
+                Arrays.stream(TaskStatus.values()).map(TaskStatus::getStringResId).collect(Collectors.toList())
+        );
+        binding.content.status.setAdapter(adapter);
 
-        // Initialize other views and set up event listeners
-        // ...
+//
+//        TaskStatus initialStatus = viewModel.getStatus().getValue();
+//        if (initialStatus != null) {
+//            int initialPosition = initialStatus.ordinal();
+//            statusSpinner.setSelection(initialPosition);
+//        }
 
-        // Set initial spinner selection
-        TaskStatus initialStatus = viewModel.getStatus().getValue();
-        if (initialStatus != null) {
-            int initialPosition = initialStatus.ordinal();
-            statusSpinner.setSelection(initialPosition);
-        }
-    }
-
-    private void setupObservers() {
         Disposable disposable1 = viewModel.modified
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -134,16 +178,51 @@ public class TaskEditFragment extends DialogFragment {
                 .subscribe(status -> {
                     if (status != null) {
                         int position = status.ordinal();
-                        statusSpinner.setSelection(position);
+                        binding.content.status.setSelection(position);
                     }
                 });
         disposables.add(disposable2);
+        Disposable disposable3 = viewModel.owner
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(owner -> {
+                    if (owner != null) {
+                        binding.content.owner.setContentDescription(getResources().getString(R.string.owner_with_value, owner.username));
+                    }
+                });
+        disposables.add(disposable3);
 
-        // Set up other observers
-        // ...
+
+        Disposable disposable4 = viewModel.dueAt
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(dueAt -> {
+                    binding.content.dueAt.setContentDescription(getResources().getString(R.string.due_date_with_value, DateTimeUtils.formattedDate(getResources(), dueAt, clock)));
+                    binding.content.dueAt.setOnClickListener(view -> {
+                       MaterialDatePicker<Long> m = MaterialDatePicker.Builder.datePicker().build();
+                       m.addOnPositiveButtonClickListener(selection -> viewModel.updateDueAt(Instant.ofEpochMilli(selection)));
+                        m.show(getChildFragmentManager(), FRAGMENT_DATE_PICKER);
+                    });
+                });
+        disposables.add(disposable4);
+
+        Disposable disposable5 = viewModel.discarded
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(discarded -> {
+                    findNavController().popBackStack(R.id.nav_task_edit_graph, true);
+                });
+        disposables.add(disposable5);
+
+
+
+        dialog.setContentView(binding.getRoot());
+
+        return dialog;
     }
-
-    // Rest of the code...
+    public NavController findNavController(){
+        return NavHostFragment.findNavController(this);
+    }
 
     private void close() {
         if (viewModel.modified.getValue()) {
@@ -152,7 +231,6 @@ public class TaskEditFragment extends DialogFragment {
             NavHostFragment.findNavController(this).popBackStack(R.id.nav_task_edit_graph, true);
         }
     }
-
     @Override
     public void onDestroyView() {
         super.onDestroyView();

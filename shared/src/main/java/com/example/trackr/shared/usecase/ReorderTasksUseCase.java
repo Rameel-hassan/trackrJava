@@ -22,7 +22,7 @@ public class ReorderTasksUseCase {
         this.taskDao = taskDao;
     }
 
-    void invoke(Long taskId, TaskStatus status, int currentOrderInCategory, int targetOrderInCategory) {
+   public void invoke(Long taskId, TaskStatus status, int currentOrderInCategory, int targetOrderInCategory) {
         taskDao.reorderTasks(taskId, status, currentOrderInCategory, targetOrderInCategory);
     }
 }

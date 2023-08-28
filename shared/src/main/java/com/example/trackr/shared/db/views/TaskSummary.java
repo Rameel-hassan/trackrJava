@@ -74,5 +74,11 @@ public class TaskSummary {
   this.starred = starred;
  }
 
+ public int getOrderInCategory() {
+  return orderInCategory;
+ }
 
+ public void setOrderInCategory(int orderInCategory) {
+  this.orderInCategory = orderInCategory;
+ }
 }

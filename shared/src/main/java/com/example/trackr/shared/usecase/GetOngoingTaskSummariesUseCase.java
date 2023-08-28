@@ -22,7 +22,7 @@ public class GetOngoingTaskSummariesUseCase {
     public GetOngoingTaskSummariesUseCase(TaskDao taskDao) {
         this.taskDao = taskDao;
     }
-    Flowable<List<TaskSummary>> invoke(Long userId) {
+    public Flowable<List<TaskSummary>> invoke(Long userId) {
         return taskDao.getOngoingTaskSummaries(userId);
     }
 

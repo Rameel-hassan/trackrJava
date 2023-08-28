@@ -21,7 +21,7 @@ public class UnarchiveUseCase {
         this.taskDao = taskDao;
     }
 
-    Completable invoke(List<Long> taskIds) {
+   public Completable invoke(List<Long> taskIds) {
        return taskDao.setIsArchived(taskIds, false);
     }
 }

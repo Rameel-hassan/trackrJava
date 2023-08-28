@@ -28,7 +28,7 @@ public class ToggleTaskStarStateUseCase {
     }
 
     @Transaction
-    Completable invoke(Long taskId, User currentUser) {
+  public Completable invoke(Long taskId, User currentUser) {
              UserTask userTask = taskDao.getUserTask(taskId, currentUser.id).blockingFirst();
             if (userTask != null) {
                return taskDao.deleteUserTasks(List.of(userTask));
@@ -36,5 +36,4 @@ public class ToggleTaskStarStateUseCase {
                return taskDao.insertUserTasks(List.of(new UserTask(currentUser.id, taskId)));
             }
     }
-
 }
