@@ -124,9 +124,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/spacing_huge"
-            android:text="@{viewModel.owner.username}"
+            android:text="@{viewModel.owner.value.username}"
             android:textAppearance="?textAppearanceBody1"
-            app:chipIconResource="@{viewModel.owner.avatar.drawableResId}"
+            app:chipIconResource="@{viewModel.owner.value.avatar.drawableResId}"
             app:clickActionLabel="@{@string/change}"
             tools:chipIcon="@drawable/ic_user"
             tools:text="Daring Dove" />
@@ -155,7 +155,7 @@
             android:minHeight="@dimen/min_touch_target"
             app:clickActionLabel="@{@string/change}"
             app:clock="@{clock}"
-            app:formattedDate="@{viewModel.dueAt}"
+            app:formattedDate="@{viewModel.dueAt.value}"
             tools:text="Sept 2, 2020 (Wed)" />
 
         <!-- Creation date isn't editable, so it is not displayed on this screen -->

@@ -1,6 +1,7 @@
 package com.example.trackr;
 
 import android.app.Application;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
@@ -28,8 +29,10 @@ public class TrackrApplication extends Application {
         String defaultValue = getResources().getString(R.string.system_default_value);
         String disabledValue = getResources().getString(R.string.disabled_value);
 
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+//        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
+
+        SharedPreferences sharedPreferences = getSharedPreferences(getPackageName() + "_preferences", Context.MODE_PRIVATE);
         String darkModeSetting = sharedPreferences.getString(getResources().getString(R.string.dark_mode_key), defaultValue);
 
         if (!darkModeSetting.equals(defaultValue)) {

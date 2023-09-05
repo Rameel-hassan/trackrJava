@@ -20,17 +20,16 @@ import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
-@AndroidEntryPoint
+
 public class DiscardConfirmationDialogFragment extends DialogFragment {
 
-    @Inject
-    ViewModelProvider.Factory viewModelFactory;
+
     private TaskEditViewModel viewModel;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        viewModel = new ViewModelProvider(requireActivity(), viewModelFactory).get(TaskEditViewModel.class);
+        viewModel = new ViewModelProvider(this).get(TaskEditViewModel.class);
     }
 
     @NonNull

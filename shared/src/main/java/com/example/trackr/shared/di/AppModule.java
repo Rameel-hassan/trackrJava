@@ -1,6 +1,7 @@
 package com.example.trackr.shared.di;
 
 import android.content.Context;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.room.Room;
@@ -13,7 +14,10 @@ import com.example.trackr.shared.db.dao.TaskDao;
 import com.example.trackr.shared.db.tables.User;
 
 import java.time.Clock;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import dagger.Module;
@@ -21,6 +25,8 @@ import dagger.Provides;
 import dagger.hilt.InstallIn;
 import dagger.hilt.android.qualifiers.ApplicationContext;
 import dagger.hilt.components.SingletonComponent;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * @author Rameel Hassan
@@ -36,16 +42,20 @@ public class AppModule {
     @Provides
     @Singleton
     AppDatabase provideDatabase(@ApplicationContext Context context) {
-        appDatabase = Room.databaseBuilder(context,
+        appDatabase = Room.databaseBuilder(
+                context,
                 AppDatabase.class,
                 "tracker-db"
-        )
-            .fallbackToDestructiveMigration()
+        ).fallbackToDestructiveMigration()
                 .addCallback(new RoomDatabase.Callback() {
                     @Override
                     public void onCreate(@NonNull SupportSQLiteDatabase db) {
                         super.onCreate(db);
-                        insertSeedData();
+                        ExecutorService ioExecutor = Executors.newSingleThreadExecutor();
+                        ioExecutor.execute(() -> {
+                            insertSeedData();
+                            ioExecutor.shutdown(); // Don't forget to shut down the executor when done
+                        });
 
                     }
                 })

@@ -16,11 +16,6 @@
             app:destination="@id/nav_task_edit_graph" />
     </fragment>
 
-    <fragment
-        android:id="@+id/nav_archives"
-        android:name="com.example.trackr.ui.archives.ArchiveTwoPaneFragment"
-        android:label="Archives"
-        tools:layout="@layout/archive_two_pane_fragment" />
 
     <fragment
         android:id="@+id/nav_settings"

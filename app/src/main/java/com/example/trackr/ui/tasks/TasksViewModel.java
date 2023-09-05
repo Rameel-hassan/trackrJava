@@ -22,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.BackpressureStrategy;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -29,6 +30,7 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.BiFunction;
 import io.reactivex.rxjava3.functions.Function;
+import io.reactivex.rxjava3.processors.BehaviorProcessor;
 import io.reactivex.rxjava3.processors.PublishProcessor;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.reactivex.rxjava3.subjects.BehaviorSubject;
@@ -42,7 +44,7 @@ import io.reactivex.rxjava3.subjects.PublishSubject;
 public class TasksViewModel extends ViewModel {
 
 
-    GetOngoingTaskSummariesUseCase getOngoingTaskSummariesUseCase;
+    private GetOngoingTaskSummariesUseCase getOngoingTaskSummariesUseCase;
     private ToggleTaskStarStateUseCase toggleTaskStarStateUseCase;
     private ReorderTasksUseCase reorderTasksUseCase;
     private ArchiveUseCase archiveUseCase;
@@ -57,25 +59,23 @@ public class TasksViewModel extends ViewModel {
     public Flowable<UndoReorderTasks> undoReorderTasks = undoReorderTasksSubject.toFlowable(BackpressureStrategy.DROP);
 
     private Long detailTaskId = null;
-    private final PublishSubject<ShowTaskDetailEvent> showTaskDetailSubject = PublishSubject.create();
-    public Flowable<ShowTaskDetailEvent> showTaskDetailEvents = showTaskDetailSubject.toFlowable(BackpressureStrategy.DROP);
+
+    private final PublishSubject<ShowTaskDetailEvent> showTaskDetailProcessor = PublishSubject.create();
+    public Flowable<ShowTaskDetailEvent> getShowTaskDetailEvents() {
+        return showTaskDetailProcessor.toFlowable(BackpressureStrategy.LATEST);
+    }
+
+    BehaviorProcessor<Map<TaskStatus, Boolean>> expandedStatesMapProcessor;
+    private final Map<TaskStatus, Boolean> expandedStatesMap = new HashMap<>();
 
 
-
-    ConcurrentHashMap concurrentHashMap = new ConcurrentHashMap<TaskStatus, Boolean>();
-
-    final BehaviorSubject<Map<TaskStatus, Boolean>> expandedStatesMap = BehaviorSubject.createDefault(
-            concurrentHashMap
-    );
-
-//    public Observable<Map<TaskStatus, Boolean>> expandedStatesMapObservable = expandedStatesMap.map();
-
-    private final Flowable<List<TaskSummary>> taskSummaries = getOngoingTaskSummariesUseCase.invoke(currentUser.id);
+    private final Flowable<List<TaskSummary>> taskSummaries;
+    private final Flowable<List<ListItem>> listItems;
 
 
     @Inject
-    public TasksViewModel(GetOngoingTaskSummariesUseCase getOngoingTaskSummariesUseCase, ToggleTaskStarStateUseCase toggleTaskStarStateUseCase, ReorderTasksUseCase reorderTasksUseCase, ArchiveUseCase archiveUseCase, UnarchiveUseCase unarchiveUseCase, User currentUser, @NonNull Closeable... closeables) {
-        super(closeables);
+    public TasksViewModel(GetOngoingTaskSummariesUseCase getOngoingTaskSummariesUseCase, ToggleTaskStarStateUseCase toggleTaskStarStateUseCase, ReorderTasksUseCase reorderTasksUseCase, ArchiveUseCase archiveUseCase, UnarchiveUseCase unarchiveUseCase, User currentUser) {
+//        super(closeables);
         this.getOngoingTaskSummariesUseCase = getOngoingTaskSummariesUseCase;
         this.toggleTaskStarStateUseCase = toggleTaskStarStateUseCase;
         this.reorderTasksUseCase = reorderTasksUseCase;
@@ -83,39 +83,48 @@ public class TasksViewModel extends ViewModel {
         this.unarchiveUseCase = unarchiveUseCase;
         this.currentUser = currentUser;
 
+
+
+        taskSummaries = getOngoingTaskSummariesUseCase.invoke(currentUser.getId())
+                .subscribeOn(Schedulers.io());
+
+
         for (TaskStatus status : TaskStatus.values()) {
-            concurrentHashMap.put(status, true);
+            expandedStatesMap.put(status, true);
         }
+
+        expandedStatesMapProcessor = BehaviorProcessor.createDefault(expandedStatesMap);
+
+        listItems = Flowable.combineLatest(taskSummaries, expandedStatesMapProcessor,
+                        (taskSummaries, statesMap) -> {
+                            ListItemsCreator listItemsCreator = new ListItemsCreator(taskSummaries, statesMap);
+                            List<ListItem> items = listItemsCreator.execute();
+                            if (detailTaskId == null && !taskSummaries.isEmpty()) {
+                                for (ListItem item : items) {
+                                    if (item instanceof ListItem.TypeTask) {
+                                        ListItem.TypeTask typeTask = (ListItem.TypeTask) item;
+                                        showTaskDetail(typeTask.getTaskSummary(), false);
+                                        break;
+                                    }
+                                }
+                            }
+                            return items;
+                        })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .share();
+
     }
-//    private final BehaviorSubject<List<ListItem>> listItemsSubject = BehaviorSubject.createDefault(Collections.emptyList());
-//
-//    public Flowable<List<ListItem>> getListItems() {
-//        return listItemsSubject.toFlowable(BackpressureStrategy.LATEST)
-//                .observeOn(Schedulers.computation());
-//    }
-//
-//    public void updateListItems() {
-//        Flowable<List<ListItem>> combinedFlowable = (Flowable<List<ListItem>>) Flowable.combineLatest(
-//                taskSummaries, expandedStatesMap,
-//                (mTaskSummaries, mStatesMap) -> {
-//                    List<ListItem> items = new ListItemsCreator((List<TaskSummary>)  mTaskSummaries, (Map<TaskStatus, Boolean> )mStatesMap).execute();
-//                    if (detailTaskId == null && !((List<TaskSummary>)mTaskSummaries).isEmpty()) {
-//                        // Show the first item. This will set the detail pane content without opening it.
-//                        ListItem.TypeTask firstItem = (ListItem.TypeTask) Observable.fromIterable(items)
-//                                .filter(item -> item instanceof ListItem.TypeTask)
-//                                .firstElement()
-//                                .blockingGet();
-//                        showTaskDetail(firstItem.getTaskSummary(), false);
-//                    }
-//                    return items;
-//                });
-//
-//        combinedFlowable.subscribe(listItemsSubject::onNext);
-//    }
+
+    public Flowable<List<ListItem>> getListItems() {
+        return listItems.observeOn(Schedulers.computation());
+    }
+
+
 
 
     public void toggleExpandedState(HeaderData headerData) {
-        expandedStatesMap
+        expandedStatesMapProcessor
                 .take(1)
                 .map(map -> {
                     Map<TaskStatus, Boolean> updatedMap = new HashMap<>(map);
@@ -125,12 +134,13 @@ public class TasksViewModel extends ViewModel {
                     }
                     return updatedMap;
                 })
-                .subscribe(expandedStatesMap::onNext);
+                .subscribe(expandedStatesMapProcessor::onNext);
     }
 
     public Completable toggleTaskStarState(TaskSummary taskSummary) {
         return Completable.fromAction(() -> toggleTaskStarStateUseCase.invoke(taskSummary.getId(), currentUser))
-                .subscribeOn(Schedulers.io());
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
     }
 
 
@@ -187,7 +197,7 @@ public class TasksViewModel extends ViewModel {
     }
 
 public void showTaskDetail(TaskSummary taskSummary, Boolean isUserSelection) {
-        showTaskDetailSubject.onNext(new ShowTaskDetailEvent(taskSummary.id, taskSummary.id != detailTaskId, isUserSelection));
+    showTaskDetailProcessor.onNext(new ShowTaskDetailEvent(taskSummary.id, taskSummary.id != detailTaskId, isUserSelection));
         detailTaskId = taskSummary.id;
     }
 }

@@ -23,7 +23,7 @@
 
         <variable
             name="viewModel"
-            type="com.example.android.trackr.ui.detail.TaskDetailViewModel" />
+            type="com.example.trackr.ui.detail.TaskDetailViewModel" />
 
         <variable
             name="clock"
@@ -95,7 +95,7 @@
                             android:layout_height="@dimen/home_task_star_size"
                             android:layout_marginEnd="20dp"
                             android:layout_marginStart="20dp"
-                            android:checked="@{viewModel.starred}"
+                            android:checked="@{viewModel.starredLiveData}"
                             android:gravity="center"
                             app:clickActionLabel="@{@string/toggle}"
                             app:ensureMinTouchArea="@{@dimen/min_touch_target}" />
@@ -106,7 +106,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginEnd="@dimen/spacing_medium"
                             android:layout_weight="1"
-                            android:text="@{viewModel.detail.title}"
+                            android:text="@{viewModel.detailLiveData.title}"
                             tools:text="Calendar design" />
 
                     </LinearLayout>
@@ -120,8 +120,8 @@
                         android:layout_marginEnd="@dimen/spacing_medium"
                         android:layout_marginStart="@dimen/spacing_huge"
                         android:layout_marginTop="@dimen/spacing_medium"
-                        android:text="@{viewModel.detail.description}"
-                        tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
+                        android:text="@{viewModel.detailLiveData.description}"
+                        tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing " />
 
                     <!-- Status -->
 
@@ -140,7 +140,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="@dimen/spacing_huge"
-                        android:text="@{viewModel.detail.status}"
+                        android:text="@{viewModel.detailLiveData.status}"
                         tools:text="Not started" />
 
                     <!-- Owner -->
@@ -152,7 +152,7 @@
                         android:layout_marginTop="@dimen/spacing_large"
                         android:importantForAccessibility="no"
                         android:text="@string/owner"
-                        app:drawableStartCompat="@{viewModel.detail.owner.avatar.drawableResId}"
+                        app:drawableStartCompat="@{viewModel.detailLiveData.owner.avatar.drawableResId}"
                         tools:drawableStartCompat="@drawable/ic_user" />
 
                     <TextView
@@ -161,7 +161,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="@dimen/spacing_huge"
-                        android:text="@{viewModel.detail.owner.username}"
+                        android:text="@{viewModel.detailLiveData.owner.username}"
                         tools:text="Daring Dove" />
 
                     <!-- Creator -->
@@ -173,7 +173,7 @@
                         android:layout_marginTop="@dimen/spacing_large"
                         android:importantForAccessibility="no"
                         android:text="@string/creator"
-                        app:drawableStartCompat="@{viewModel.detail.creator.avatar.drawableResId}"
+                        app:drawableStartCompat="@{viewModel.detailLiveData.creator.avatar.drawableResId}"
                         tools:drawableStartCompat="@drawable/ic_user" />
 
                     <TextView
@@ -182,7 +182,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="@dimen/spacing_huge"
-                        android:text="@{viewModel.detail.creator.username}"
+                        android:text="@{viewModel.detailLiveData.creator.username}"
                         tools:text="Peaceful Puffin" />
 
                     <!-- Due date -->
@@ -203,7 +203,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="@dimen/spacing_huge"
                         app:clock="@{clock}"
-                        app:formattedDate="@{viewModel.detail.dueAt}"
+                        app:formattedDate="@{viewModel.detailLiveData.dueAt}"
                         tools:text="Sept 2, 2020 (Wed)" />
 
                     <TextView
@@ -212,7 +212,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="@dimen/spacing_huge"
                         app:clock="@{clock}"
-                        app:dueMessageOrHide="@{viewModel.detail.dueAt}"
+                        app:dueMessageOrHide="@{viewModel.detailLiveData.dueAt}"
                         tools:text="Due in 3 days" />
 
                     <!-- Creation date -->
@@ -234,7 +234,7 @@
                         android:layout_marginStart="@dimen/spacing_huge"
                         android:textAppearance="?textAppearanceBody1"
                         app:clock="@{clock}"
-                        app:formattedDate="@{viewModel.detail.createdAt}"
+                        app:formattedDate="@{viewModel.detailLiveData.createdAt}"
                         tools:text="July 16, 2020 (Thur)" />
 
                     <!-- Tags -->
@@ -253,7 +253,7 @@
                         android:layout_marginBottom="@dimen/spacing_large"
                         android:layout_marginStart="@dimen/spacing_huge"
                         app:showAllTags="@{true}"
-                        app:tags="@{viewModel.detail.tags}" />
+                        app:tags="@{viewModel.detailLiveData.tags}" />
 
                 </LinearLayout>
 

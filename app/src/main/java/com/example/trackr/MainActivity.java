@@ -43,12 +43,14 @@ public class MainActivity extends AppCompatActivity {
             public WindowInsetsCompat onApplyWindowInsets(View view, WindowInsetsCompat insets, Insets padding, Insets margins) {
                 boolean isRtl = Extentions.isRtl(view);
                 Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                if ( binding.navigationRail!= null){
                 binding.navigationRail.setPadding(
                         isRtl ? 0 : systemBars.left,
                         systemBars.top,
                         isRtl ? systemBars.right : 0,
                         systemBars.bottom
                 );
+                }
                 Insets inset = Insets.of(isRtl ? systemBars.left : 0, systemBars.top, isRtl ? 0 : systemBars.right, systemBars.bottom);
                 return new WindowInsetsCompat.Builder().setInsets(WindowInsetsCompat.Type.systemBars(),inset).build();
             }
@@ -56,7 +58,8 @@ public class MainActivity extends AppCompatActivity {
 
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 
-        setNavigationRailProperties(binding.navigationRail);
+        if (binding.navigationRail != null)
+            setNavigationRailProperties(binding.navigationRail);
     }
 
     private void setNavigationRailProperties(NavigationRailView navigationRail) {

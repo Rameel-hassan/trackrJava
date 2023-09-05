@@ -25,11 +25,10 @@ import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
-@AndroidEntryPoint
+
 public class UserSelectionDialogFragment extends DialogFragment {
 
-    @Inject
-    ViewModelProvider.Factory viewModelFactory;
+
     private TaskEditViewModel viewModel;
 
     @Override
@@ -37,7 +36,7 @@ public class UserSelectionDialogFragment extends DialogFragment {
         super.onCreate(savedInstanceState);
 //        NavBackStackEntry backStackEntry = NavHostFragment.findNavController(this).getBackStackEntry(R.id.nav_task_edit_graph);
 //        ViewModelProvider viewModelProvider = new ViewModelProvider(backStackEntry, getDefaultViewModelProviderFactory());
-        viewModel = new ViewModelProvider(requireActivity(), viewModelFactory).get(TaskEditViewModel.class);
+        viewModel = new ViewModelProvider(this).get(TaskEditViewModel.class);
     }
 
     @NonNull

@@ -37,16 +37,17 @@ public interface TaskDao {
 
     // TODO :consider creating UserDao and moving some of the logic in this Dao there
     @Insert
-    Completable insertUsers(List<User> users);
+    void insertUsers(List<User> users);
+
 
     @Insert
-    Completable insertTags(List<Tag> tags);
+    void insertTags(List<Tag> tags);
 
     @Insert
-    Completable insertTasks(List<Task> tasks);
+    void insertTasks(List<Task> tasks);
 
     @Insert
-    Completable insertTaskTags(List<TaskTag> taskTags);
+    void insertTaskTags(List<TaskTag> taskTags);
 
     @Insert
     Completable insertUserTasks(List<UserTask> userTasks);

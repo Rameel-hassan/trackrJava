@@ -1,7 +1,5 @@
 plugins {
     id 'com.android.application'
-    id 'kotlin-android'
-    id 'kotlin-kapt'
     id 'com.google.dagger.hilt.android'
     id 'androidx.navigation.safeargs'
 }
@@ -42,42 +40,39 @@ android {
         dataBinding true
     }
 }
-// Allow references to generated code
-kapt {
-    correctErrorTypes true
-}
+
 dependencies {
     implementation project(':shared')
 
-    implementation 'androidx.room:room-common:2.5.2'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 
-    def preference_version = "1.2.1"
+
     // Java language implementation
     implementation "androidx.preference:preference:$preference_version"
 
-    implementation 'androidx.navigation:navigation-fragment:2.7.0'
-    implementation 'androidx.navigation:navigation-ui:2.7.0'
+    implementation "androidx.navigation:navigation-fragment:$nav_version"
+    implementation "androidx.navigation:navigation-ui:$nav_version"
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'
 
-    implementation 'com.google.dagger:hilt-android:2.47'
-    annotationProcessor 'com.google.dagger:hilt-compiler:2.47'
+    implementation "com.google.dagger:hilt-android:$hilt_version"
+    annotationProcessor "com.google.dagger:hilt-compiler:$hilt_version"
 
-    def room_version = "2.5.2"
-    api "androidx.room:room-ktx:$room_version"
-    // To use Kotlin annotation processing tool (kapt)
+    implementation "androidx.room:room-runtime:$room_version"
     annotationProcessor "androidx.room:room-compiler:$room_version"
-
-
-    //RxKotlin2 / RxAndroid
-//    implementation 'io.reactivex.rxjava2:rxkotlin:2.2.0'
-//    implementation 'io.reactivex.rxjava2:rxandroid:2.2.6'
     implementation 'io.reactivex.rxjava3:rxandroid:3.0.2'
-
 
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+
+    constraints {
+        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0") {
+            because("kotlin-stdlib-jdk7 is now a part of kotlin-stdlib")
+        }
+        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0") {
+            because("kotlin-stdlib-jdk8 is now a part of kotlin-stdlib")
+        }
+    }
 }

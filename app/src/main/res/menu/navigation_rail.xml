@@ -22,11 +22,6 @@
         android:title="@string/tasks"
         android:icon="@drawable/ic_task" />
     <item
-        android:id="@+id/nav_archives"
-        android:contentDescription="@string/archive"
-        android:title="@string/archive"
-        android:icon="@drawable/ic_archive" />
-    <item
         android:id="@+id/nav_settings"
         android:contentDescription="@string/settings"
         android:title="@string/settings"

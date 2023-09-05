@@ -25,7 +25,4 @@ public class GetOngoingTaskSummariesUseCase {
     public Flowable<List<TaskSummary>> invoke(Long userId) {
         return taskDao.getOngoingTaskSummaries(userId);
     }
-
-
-
 }

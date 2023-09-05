@@ -24,31 +24,16 @@ import io.reactivex.rxjava3.processors.PublishProcessor;
 
 @HiltViewModel
 public class TwoPaneViewModel extends ViewModel {
-//    private MutableLiveData<Boolean> isTwoPane = new MutableLiveData<>(false);
-    private final BehaviorProcessor<Boolean> isTwoPaneSubject = BehaviorProcessor.createDefault(false);
+    public MutableLiveData<Boolean> isTwoPane = new MutableLiveData<>(false);
 
     @Inject
     public TwoPaneViewModel() {
     }
+    public final PublishProcessor<Object> detailPaneUpEventSubject = PublishProcessor.create();
+    public final PublishProcessor<Long> editTaskEventSubject = PublishProcessor.create();
 
-    private final PublishProcessor<Object> detailPaneUpEventSubject = PublishProcessor.create();
-    private final PublishProcessor<Long> editTaskEventSubject = PublishProcessor.create();
-
-
-
-    public void setIsTwoPane(boolean isTwoPane) {
-        isTwoPaneSubject.onNext(isTwoPane);
-    }
-    public Flowable<Boolean> isTwoPane() {
-        return isTwoPaneSubject;
-    }
-
-    public Flowable<Object> detailPaneUpEvents() {
-        return detailPaneUpEventSubject;
-    }
-
-    public Flowable<Long> editTaskEvents() {
-        return editTaskEventSubject;
+    public void setIsTwoPane(boolean twoPane) {
+        isTwoPane.setValue(twoPane);
     }
 
     public void onDetailPaneNavigateUp() {

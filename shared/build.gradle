@@ -1,6 +1,5 @@
 plugins {
     id 'com.android.library'
-    id 'kotlin-kapt'
     id 'com.google.dagger.hilt.android'
 }
 
@@ -29,36 +28,27 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_9
-        targetCompatibility JavaVersion.VERSION_1_9
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     namespace 'com.example.trackr.shared'
 }
-// Allow references to generated code
-kapt {
-    correctErrorTypes true
-}
+
 dependencies {
-    implementation 'androidx.room:room-common:2.5.2'
-    def room_version = "2.5.2"
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'
 
-    implementation "com.google.dagger:hilt-android:2.45"
-    annotationProcessor "com.google.dagger:hilt-compiler:2.45"
 
-    api "androidx.room:room-ktx:$room_version"
+    implementation "com.google.dagger:hilt-android:$hilt_version"
+    annotationProcessor "com.google.dagger:hilt-compiler:$hilt_version"
 
-    // To use Kotlin annotation processing tool (kapt)
+
+    implementation "androidx.room:room-runtime:$room_version"
     annotationProcessor "androidx.room:room-compiler:$room_version"
 
-    //RxKotlin2 / RxAndroid
-//    implementation 'io.reactivex.rxjava2:rxkotlin:2.2.0'
-//    implementation 'io.reactivex.rxjava2:rxandroid:2.2.6'
     implementation 'io.reactivex.rxjava3:rxandroid:3.0.2'
     implementation 'androidx.room:room-rxjava3:2.5.2'
-
 
 
 

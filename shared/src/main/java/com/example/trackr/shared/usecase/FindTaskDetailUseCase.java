@@ -5,6 +5,7 @@ import com.example.trackr.shared.db.views.TaskDetail;
 
 import javax.inject.Inject;
 
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 
 
@@ -20,7 +21,7 @@ public class FindTaskDetailUseCase {
         this.taskDao = taskDao;
     }
 
-    Maybe<TaskDetail> invoke(Long taskId){
+    public Maybe<TaskDetail> invoke(Long taskId){
        return taskDao.findTaskDetailById(taskId);
     }
 }

@@ -5,11 +5,14 @@ package com.example.trackr.ui;
  * Created 15/08/2023 at 2:45 pm
  */
 
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewTreeObserver;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.LayoutRes;
+import androidx.annotation.NonNull;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -19,19 +22,13 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.NavController;
 import androidx.slidingpanelayout.widget.SlidingPaneLayout;
 
+
+import com.example.trackr.NavTaskEditGraphArgs;
 import com.example.trackr.R;
 import com.example.trackr.ui.utils.EdgeToEdgeViewUtils;
-import com.example.trackr.ui.utils.Extentions;
 
-import java.util.Objects;
-
-import javax.inject.Inject;
-
-import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.functions.Consumer;
-import io.reactivex.rxjava3.subjects.BehaviorSubject;
 
 
 
@@ -45,11 +42,11 @@ public abstract class BaseTwoPaneFragment extends Fragment {
         super(contentLayoutId);
     }
 
-    @Inject
-    private TwoPaneViewModel twoPaneViewModel;
+    TwoPaneViewModel twoPaneViewModel;
     private SlidingPaneBackPressHandler backPressHandler;
 
     public abstract SlidingPaneLayout getSlidingPaneLayout();
+
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
@@ -58,37 +55,41 @@ public abstract class BaseTwoPaneFragment extends Fragment {
         SlidingPaneLayout slidingPaneLayout = getSlidingPaneLayout();
         slidingPaneLayout.setLockMode(SlidingPaneLayout.LOCK_MODE_LOCKED);
 
+        twoPaneViewModel = new ViewModelProvider(requireActivity()).get(TwoPaneViewModel.class);
 
-        EdgeToEdgeViewUtils.doOnApplyWindowInsets(slidingPaneLayout, new EdgeToEdgeViewUtils.OnApplyWindowInsetsListener() {
+        SlidingPaneBackPressHandler.doOnLayout(view, new Runnable() {
             @Override
-            public WindowInsetsCompat onApplyWindowInsets(View view, WindowInsetsCompat insets, Insets padding, Insets margins) {
-                twoPaneViewModel.setIsTwoPane(!slidingPaneLayout.isSlideable());
-                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                view.setPadding(
-                        view.getPaddingLeft() + systemBars.left,
-                        view.getPaddingTop(),
-                        view.getPaddingRight() + systemBars.right,
-                        view.getPaddingBottom()
-                );
-                Insets inset = Insets.of( 0, systemBars.top, 0, systemBars.bottom);
-                return new WindowInsetsCompat.Builder().setInsets(WindowInsetsCompat.Type.systemBars(),inset).build();
+            public void run() {
+                EdgeToEdgeViewUtils.doOnApplyWindowInsets(slidingPaneLayout, (view1, insets, padding, margins) -> {
+                    twoPaneViewModel.setIsTwoPane(!slidingPaneLayout.isSlideable());
+                    Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                    view1.setPadding(
+                            view1.getPaddingLeft() + systemBars.left,
+                            view1.getPaddingTop(),
+                            view1.getPaddingRight() + systemBars.right,
+                            view1.getPaddingBottom()
+                    );
+                    Insets inset = Insets.of( 0, systemBars.top, 0, systemBars.bottom);
+                    return new WindowInsetsCompat.Builder().setInsets(WindowInsetsCompat.Type.systemBars(),inset).build();
+                });
+
             }
         });
 
 
-        Disposable disposableDetailPaneUpEvents = twoPaneViewModel.detailPaneUpEvents()
+        Disposable disposableDetailPaneUpEvents = twoPaneViewModel.detailPaneUpEventSubject
                 .subscribe(unit -> {
                     if (backPressHandler.isEnabled()) {
                         backPressHandler.handleOnBackPressed();
                     }
                 });
 
-        Disposable disposableEditTaskEvents = twoPaneViewModel.editTaskEvents()
+        Disposable disposableEditTaskEvents = twoPaneViewModel.editTaskEventSubject
                 .subscribe(taskId -> {
                     NavController navController = NavHostFragment.findNavController(this);
 
-//                    Bundle args = new NavTaskEditGraphArgs(taskId).toBundle();
-//                    navController.navigate(R.id.nav_task_edit_graph, args);
+                    NavTaskEditGraphArgs navArgs = new com.example.trackr.NavTaskEditGraphArgs.Builder().setTaskId(taskId).build();
+                    navController.navigate(R.id.nav_task_edit_graph, navArgs.toBundle());
                 });
 
         backPressHandler = new SlidingPaneBackPressHandler(slidingPaneLayout);
@@ -104,17 +105,21 @@ public abstract class BaseTwoPaneFragment extends Fragment {
 class SlidingPaneBackPressHandler extends OnBackPressedCallback implements SlidingPaneLayout.PanelSlideListener {
 
     private SlidingPaneLayout slidingPaneLayout;
-    private BehaviorSubject<Boolean> slideableSubject = BehaviorSubject.create();
 
     public SlidingPaneBackPressHandler(SlidingPaneLayout slidingPaneLayout) {
         super(false);
         this.slidingPaneLayout = slidingPaneLayout;
         slidingPaneLayout.addPanelSlideListener(this);
-//        slidingPaneLayout.doOnLayout(v -> syncState());
+        doOnLayout(slidingPaneLayout, new Runnable() {
+            @Override
+            public void run() {
+                syncState();
+            }
+        });
     }
 
     private void syncState() {
-        setEnabled(slideableSubject.blockingFirst() && slidingPaneLayout.isOpen());
+        setEnabled(slidingPaneLayout.isSlideable() && slidingPaneLayout.isOpen());
     }
 
     @Override
@@ -136,4 +141,23 @@ class SlidingPaneBackPressHandler extends OnBackPressedCallback implements Slidi
     public void onPanelSlide(View panel, float slideOffset) {
         // Empty
     }
+
+    /**
+     * Performs an action when the provided view is laid out.
+     *
+     * @param view     the view to listen to for layouts.
+     * @param runnable the runnable to run when the view is
+     *                 laid out.
+     */
+    public static void doOnLayout(@NonNull final View view, @NonNull final Runnable runnable) {
+        view.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                runnable.run();
+            }
+        });
+    }
+
 }
+

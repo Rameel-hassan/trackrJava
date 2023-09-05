@@ -58,7 +58,7 @@ public class TaskEditFragment extends DialogFragment {
 
     private TaskEditViewModel viewModel;
     @Inject
-    private Clock clock;
+    Clock clock;
     private NavTaskEditGraphArgs args;
 //    private Spinner statusSpinner;
     private CompositeDisposable disposables = new CompositeDisposable();
@@ -71,8 +71,9 @@ public class TaskEditFragment extends DialogFragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        viewModel = new ViewModelProvider(this).get(TaskEditViewModel.class);
         args = NavTaskEditGraphArgs.fromBundle(requireArguments());
+        viewModel = new ViewModelProvider(this).get(TaskEditViewModel.class);
+
         viewModel.setTaskId(args.getTaskId());
     }
 
