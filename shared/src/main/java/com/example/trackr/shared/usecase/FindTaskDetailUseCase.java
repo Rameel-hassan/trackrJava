@@ -7,6 +7,8 @@ import javax.inject.Inject;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 
 
 /**
@@ -21,7 +23,7 @@ public class FindTaskDetailUseCase {
         this.taskDao = taskDao;
     }
 
-    public Maybe<TaskDetail> invoke(Long taskId){
+    public Flowable<TaskDetail> invoke(Long taskId){
        return taskDao.findTaskDetailById(taskId);
     }
 }

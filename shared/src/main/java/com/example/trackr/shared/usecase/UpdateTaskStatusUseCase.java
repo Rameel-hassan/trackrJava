@@ -22,7 +22,7 @@ public class UpdateTaskStatusUseCase {
         this.taskDao = taskDao;
     }
 
-   Completable invoke(List<Long> taskIds, TaskStatus status) {
+   public Completable invoke(List<Long> taskIds, TaskStatus status) {
         return taskDao.updateTaskStatus(taskIds, status);
     }
 }

@@ -5,8 +5,6 @@ import com.example.trackr.shared.db.views.TaskDetail;
 
 import javax.inject.Inject;
 
-import io.reactivex.rxjava3.core.Completable;
-
 /**
  * @author Rameel Hassan
  * Created 06/03/2023 at 4:39 PM

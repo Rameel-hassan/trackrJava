@@ -4,35 +4,26 @@ package com.example.trackr.ui.detail;
  * @author Rameel Hassan
  * Created 28/08/2023 at 3:29 pm
  */
-import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
-import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelStoreOwner;
 
 import com.example.trackr.shared.db.tables.User;
 import com.example.trackr.shared.db.views.TaskDetail;
 import com.example.trackr.shared.usecase.FindTaskDetailUseCase;
 import com.example.trackr.shared.usecase.ToggleTaskStarStateUseCase;
 
-import java.util.concurrent.TimeUnit;
+import java.util.List;
 
 import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
-import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.functions.Action;
-import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-
-
+import io.reactivex.rxjava3.subjects.BehaviorSubject;
 
 @HiltViewModel
 public class TaskDetailViewModel extends ViewModel {
@@ -40,10 +31,9 @@ public class TaskDetailViewModel extends ViewModel {
     private final FindTaskDetailUseCase findTaskDetailUseCase;
     private final ToggleTaskStarStateUseCase toggleTaskStarStateUseCase;
     private final User currentUser;
-
-    private final MutableLiveData<Long> taskIdLiveData = new MutableLiveData<>();
     private final MutableLiveData<TaskDetail> detailLiveData = new MutableLiveData<>();
     private final MutableLiveData<Boolean> starredLiveData = new MutableLiveData<>();
+    private final BehaviorSubject<Long> taskIdSubject = BehaviorSubject.createDefault(0L);
 
     private final CompositeDisposable disposables = new CompositeDisposable();
 
@@ -52,9 +42,23 @@ public class TaskDetailViewModel extends ViewModel {
             FindTaskDetailUseCase findTaskDetailUseCase,
             ToggleTaskStarStateUseCase toggleTaskStarStateUseCase,
             User currentUser) {
+
         this.findTaskDetailUseCase = findTaskDetailUseCase;
         this.toggleTaskStarStateUseCase = toggleTaskStarStateUseCase;
         this.currentUser = currentUser;
+
+        Disposable disposable = taskIdSubject.switchMap(id -> this.findTaskDetailUseCase.invoke(id).toObservable())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(detail -> {
+                    if (detail != null) {
+                        detailLiveData.postValue(detail);
+                        boolean contains = containsId(detail.getStarUsers(), currentUser.getId());
+                        boolean hasStar = detail.getStarUsers() != null;
+                        starredLiveData.postValue(contains && hasStar);
+                    }
+                });
+        disposables.add(disposable);
     }
 
     public LiveData<TaskDetail> getDetailLiveData() {
@@ -66,49 +70,15 @@ public class TaskDetailViewModel extends ViewModel {
     }
 
     public void setTaskId(long taskId) {
-        taskIdLiveData.setValue(taskId);
-
-        Disposable disposable = findTaskDetailUseCase.invoke(taskId)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new Consumer<TaskDetail>() {
-                            @Override
-                            public void accept(TaskDetail detail) throws Throwable {
-                              detailLiveData.setValue(detail);
-                            }
-                        });
-
-        disposables.add(disposable);
+        taskIdSubject.onNext(taskId);
     }
 
     public void toggleTaskStarState() {
-        Long id = taskIdLiveData.getValue();
+        Long id = taskIdSubject.getValue();
         if (id == null || id <= 0L) return;
-
-        Disposable disposable = Completable.fromCallable(() -> {
-                    Log.d("TaskDetailViewModel", "toggleTaskStarState: start");
-                    try {
-                        toggleTaskStarStateUseCase.invoke(id, currentUser);
-                    }catch (Exception e)
-                    {
-                        Log.d("TaskDetailViewModel", "toggleTaskStarState: call exception " + e.getMessage());
-
-                    }
-
-                    Log.d("TaskDetailViewModel", "toggleTaskStarState: call complete");
-                    return true;
-                })
+        Disposable disposable = toggleTaskStarStateUseCase.invoke(id, currentUser)
                 .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                        new Action() {
-                            @Override
-                            public void run() throws Throwable {
-                                Log.d("TaskDetailViewModel", "run: working");
-                            }
-                        }
-                );
-
+                .subscribe();
         disposables.add(disposable);
     }
 
@@ -116,5 +86,9 @@ public class TaskDetailViewModel extends ViewModel {
     protected void onCleared() {
         super.onCleared();
         disposables.clear();
+    }
+
+    private boolean containsId(final List<User> list, final Long id) {
+        return list != null && list.stream().map(User::getId).anyMatch(id::equals);
     }
 }

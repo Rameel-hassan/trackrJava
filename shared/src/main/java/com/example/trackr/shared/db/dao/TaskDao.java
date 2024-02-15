@@ -5,6 +5,7 @@ import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+import androidx.room.RewriteQueriesToDropUnusedColumns;
 import androidx.room.Transaction;
 
 import com.example.trackr.shared.db.tables.Tag;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 
 
@@ -63,7 +65,7 @@ public interface TaskDao {
 
     @Transaction
     @Query("SELECT * FROM TaskDetail WHERE id = :id")
-    Maybe<TaskDetail> findTaskDetailById(Long id);
+    Flowable<TaskDetail> findTaskDetailById(Long id);
 
     @Transaction
     @Query("SELECT * FROM TaskDetail WHERE id = :id")
@@ -108,7 +110,7 @@ public interface TaskDao {
     Completable setIsArchived(List<Long> ids,Boolean isArchived);
 
     @Query("SELECT * FROM user_tasks WHERE taskId = :taskId AND userId = :userId")
-    Flowable<UserTask> getUserTask(Long taskId,Long userId);
+    Single<UserTask> getUserTask(Long taskId,Long userId);
 
     @Query("SELECT * FROM users")
     Flowable<List<User>> loadUsers();

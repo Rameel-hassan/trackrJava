@@ -1,6 +1,7 @@
 package com.example.trackr.ui.tasks;
 
-import androidx.annotation.NonNull;
+import android.util.Log;
+
 import androidx.lifecycle.ViewModel;
 
 import com.example.trackr.shared.db.tables.TaskStatus;
@@ -11,6 +12,9 @@ import com.example.trackr.shared.usecase.GetOngoingTaskSummariesUseCase;
 import com.example.trackr.shared.usecase.ReorderTasksUseCase;
 import com.example.trackr.shared.usecase.ToggleTaskStarStateUseCase;
 import com.example.trackr.shared.usecase.UnarchiveUseCase;
+
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 
 import java.io.Closeable;
 import java.util.Collections;
@@ -23,11 +27,14 @@ import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.BackpressureStrategy;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.CompletableObserver;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.functions.BiFunction;
 import io.reactivex.rxjava3.functions.Function;
 import io.reactivex.rxjava3.processors.BehaviorProcessor;
@@ -137,10 +144,30 @@ public class TasksViewModel extends ViewModel {
                 .subscribe(expandedStatesMapProcessor::onNext);
     }
 
-    public Completable toggleTaskStarState(TaskSummary taskSummary) {
-        return Completable.fromAction(() -> toggleTaskStarStateUseCase.invoke(taskSummary.getId(), currentUser))
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
+    public void toggleTaskStarState(TaskSummary taskSummary) {
+        try {
+            toggleTaskStarStateUseCase.invoke(taskSummary.getId(), currentUser)
+                   .subscribeOn(Schedulers.io())
+                     .observeOn(AndroidSchedulers.mainThread())
+                   .subscribe(new CompletableObserver() {
+                       @Override
+                       public void onSubscribe(@NonNull Disposable d) {
+                           Log.d("TasksViewModel", "onSubscribe: ");
+                       }
+
+                       @Override
+                       public void onComplete() {
+                           Log.d("TasksViewModel", "onComplete: ");
+                       }
+
+                       @Override
+                       public void onError(@NonNull Throwable e) {
+                           Log.d("TasksViewModel", "onError: ");
+                       }
+                   });
+        } catch (Exception e) {
+            Log.d("TasksViewModel", "toggleTaskStarState: "+e.getMessage());
+        }
     }
 
 
